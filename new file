@@ -1,0 +1,579 @@
+mapreduce code for bad redocrds:
+
+package assignment;
+
+import org.apache.hadoop.mapreduce.*;
+import org.apache.hadoop.mapreduce.Mapper.Context;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+
+
+import java.io.IOException;
+import java.util.logging.Logger;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.*;
+import org.apache.hadoop.mapred.TextInputFormat;
+
+public class TvSales {
+
+    public static class TvSalesMapper extends Mapper<LongWritable, Text, LongWritable, Text>{
+		
+        public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException{
+	
+	    if(recordIsInvalid(value)==false){
+	        Text record = new Text();
+		record = value;
+	        context.write(key,record);
+	    }			
+}
+    		
+	private boolean recordIsInvalid(Text record){
+			
+            String[] lineArray = record.toString().split("\\|");
+	    boolean isInvalid = false;
+	    for(int i=0;i<lineArray.length;i++){
+	        if(lineArray[i].equals("NA")){
+	            isInvalid = true;
+	        }
+	    }
+	    return isInvalid;
+     }
+    }
+	public static void main(String[] args) throws Exception{
+	    
+	    Configuration conf = new Configuration();	
+		
+	    Job job = Job.getInstance(conf, "Tv Sales Invalid REcords");
+	    job.setJarByClass(TvSales.class);
+	    
+	    job.setMapOutputKeyClass(LongWritable.class);
+	    job.setMapOutputValueClass(Text.class);
+	    	    
+	    job.setMapperClass(TvSalesMapper.class);
+	    
+	    FileInputFormat.addInputPath(job, new Path(args[0]));
+	    FileOutputFormat.setOutputPath(job, new Path(args[1]));
+	    
+	    System.exit(job.waitForCompletion(true) ? 0 : 1);  	    	    	    
+	}
+}
+
+
+
+command line :
+
+
+[acadgild@localhost ~]$ hadoop jar badrecords.jar assignment.TvSales /hadoopdata1/assmapreduce.txt  /hadoopdata1/task1mapreduceb
+18/06/25 20:08:08 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+18/06/25 20:08:09 INFO client.RMProxy: Connecting to ResourceManager at localhost/127.0.0.1:8032
+18/06/25 20:08:11 WARN mapreduce.JobResourceUploader: Hadoop command-line option parsing not performed. Implement the Tool interface and execute your application with ToolRunner to remedy this.
+18/06/25 20:08:11 INFO input.FileInputFormat: Total input paths to process : 1
+18/06/25 20:08:11 INFO mapreduce.JobSubmitter: number of splits:1
+18/06/25 20:08:12 INFO mapreduce.JobSubmitter: Submitting tokens for job: job_1529123615612_0007
+18/06/25 20:08:12 INFO impl.YarnClientImpl: Submitted application application_1529123615612_0007
+18/06/25 20:08:12 INFO mapreduce.Job: The url to track the job: http://localhost:8088/proxy/application_1529123615612_0007/
+18/06/25 20:08:12 INFO mapreduce.Job: Running job: job_1529123615612_0007
+18/06/25 20:08:24 INFO mapreduce.Job: Job job_1529123615612_0007 running in uber mode : false
+18/06/25 20:08:24 INFO mapreduce.Job:  map 0% reduce 0%
+18/06/25 20:08:34 INFO mapreduce.Job:  map 100% reduce 0%
+18/06/25 20:08:45 INFO mapreduce.Job:  map 100% reduce 100%
+18/06/25 20:08:45 INFO mapreduce.Job: Job job_1529123615612_0007 completed successfully
+18/06/25 20:08:45 INFO mapreduce.Job: Counters: 49
+	File System Counters
+		FILE: Number of bytes read=812
+		FILE: Number of bytes written=215955
+		FILE: Number of read operations=0
+		FILE: Number of large read operations=0
+		FILE: Number of write operations=0
+		HDFS: Number of bytes read=832
+		HDFS: Number of bytes written=706
+		HDFS: Number of read operations=6
+		HDFS: Number of large read operations=0
+		HDFS: Number of write operations=2
+	Job Counters 
+		Launched map tasks=1
+		Launched reduce tasks=1
+		Data-local map tasks=1
+		Total time spent by all maps in occupied slots (ms)=8136
+		Total time spent by all reduces in occupied slots (ms)=7556
+		Total time spent by all map tasks (ms)=8136
+		Total time spent by all reduce tasks (ms)=7556
+		Total vcore-milliseconds taken by all map tasks=8136
+		Total vcore-milliseconds taken by all reduce tasks=7556
+		Total megabyte-milliseconds taken by all map tasks=8331264
+		Total megabyte-milliseconds taken by all reduce tasks=7737344
+	Map-Reduce Framework
+		Map input records=18
+		Map output records=16
+		Map output bytes=774
+		Map output materialized bytes=812
+		Input split bytes=115
+		Combine input records=0
+		Combine output records=0
+		Reduce input groups=16
+		Reduce shuffle bytes=812
+		Reduce input records=16
+		Reduce output records=16
+		Spilled Records=32
+		Shuffled Maps =1
+		Failed Shuffles=0
+		Merged Map outputs=1
+		GC time elapsed (ms)=235
+		CPU time spent (ms)=1960
+		Physical memory (bytes) snapshot=286769152
+		Virtual memory (bytes) snapshot=4118192128
+		Total committed heap usage (bytes)=170004480
+	Shuffle Errors
+		BAD_ID=0
+		CONNECTION=0
+		IO_ERROR=0
+		WRONG_LENGTH=0
+		WRONG_MAP=0
+		WRONG_REDUCE=0
+	File Input Format Counters 
+		Bytes Read=717
+	File Output Format Counters 
+		Bytes Written=706
+You have new mail in /var/spool/mail/acadgild
+[acadgild@localhost ~]$ hdfs dfs -ls /hadoopdata1
+18/06/25 20:09:02 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+Found 10 items
+-rw-r--r--   1 acadgild supergroup        717 2018-06-25 19:33 /hadoopdata1/assmapreduce.txt
+drwxr-xr-x   - acadgild supergroup          0 2018-06-16 10:41 /hadoopdata1/hadoop
+drwxr-xr-x   - acadgild supergroup          0 2018-06-25 20:03 /hadoopdata1/task1mapreduce
+drwxr-xr-x   - acadgild supergroup          0 2018-06-25 20:08 /hadoopdata1/task1mapreduceb
+drwxr-xr-x   - acadgild supergroup          0 2018-06-16 11:59 /hadoopdata1/word
+drwxr-xr-x   - acadgild supergroup          0 2018-06-16 12:09 /hadoopdata1/wordout
+drwxr-xr-x   - acadgild supergroup          0 2018-06-16 12:16 /hadoopdata1/wordout1
+drwxr-xr-x   - acadgild supergroup          0 2018-06-16 12:18 /hadoopdata1/wordout2
+drwxr-xr-x   - acadgild supergroup          0 2018-06-16 12:31 /hadoopdata1/wordout3
+drwxr-xr-x   - acadgild supergroup          0 2018-06-16 12:35 /hadoopdata1/wordout4
+[acadgild@localhost ~]$ hdfs dfs -ls /hadoopdata1/task1mapreduceb
+18/06/25 20:09:26 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+Found 2 items
+-rw-r--r--   1 acadgild supergroup          0 2018-06-25 20:08 /hadoopdata1/task1mapreduceb/_SUCCESS
+-rw-r--r--   1 acadgild supergroup        706 2018-06-25 20:08 /hadoopdata1/task1mapreduceb/part-r-00000
+[acadgild@localhost ~]$ hdfs dfs -cat /hadoopdata1/task1mapreduceb/part-r-00000
+18/06/25 20:09:56 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+0	Samsung|Optima|14|Madhya Pradesh|132401|14200
+46	Onida|Lucid|18|Uttar Pradesh|232401|16200
+88	Akai|Decent|16|Kerala|922401|12200
+123	Lava|Attention|20|Assam|454601|24200
+160	Zen|Super|14|Maharashtra|619082|9200
+197	Samsung|Optima|14|Madhya Pradesh|132401|14200
+243	Onida|Lucid|18|Uttar Pradesh|232401|16200
+285	Onida|Decent|14|Uttar Pradesh|232401|16200
+360	Lava|Attention|20|Assam|454601|24200
+397	Zen|Super|14|Maharashtra|619082|9200
+434	Samsung|Optima|14|Madhya Pradesh|132401|14200
+519	Samsung|Decent|16|Kerala|922401|12200
+557	Lava|Attention|20|Assam|454601|24200
+594	Samsung|Super|14|Maharashtra|619082|9200
+635	Samsung|Super|14|Maharashtra|619082|9200
+676	Samsung|Super|14|Maharashtra|619082|9200
+You have new mail in /var/spool/mail/acadgild
+[acadgild@localhost ~]$ 
+
+
+
+onida sales:
+
+
+code:
+package assignment;
+
+import org.apache.hadoop.mapreduce.*;
+import org.apache.hadoop.mapreduce.Mapper.Context;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+
+
+import java.io.IOException;
+import java.util.logging.Logger;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.*;
+import org.apache.hadoop.mapred.TextInputFormat;
+
+public class TvSalesonida {
+	
+	public static class TvSalesMapper extends Mapper<LongWritable, Text, Text, IntWritable>{
+		
+		public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException{
+	
+		    if(recordIsInvalid(value)==false & value.toString().split("\\|")[0].equals("Onida")){
+		        Text state = new Text();
+			IntWritable unit = new IntWritable();				
+			state = new Text(value.toString().split("\\|")[3]);
+			unit = new IntWritable(1);
+			context.write(state, unit );
+		    }
+
+		}
+		
+		private boolean recordIsInvalid(Text record){
+			
+			String[] lineArray = record.toString().split("\\|");
+			boolean isInvalid = false;
+	        for(int i=0;i<lineArray.length;i++){
+	        	if(lineArray[i].equals("NA")){
+	        		isInvalid = true;
+	        	}
+	        }
+	        return isInvalid;
+		}
+	}
+	public static class TvSalesReducer extends Reducer<Text, IntWritable, Text, IntWritable>{
+		
+		private IntWritable result = new IntWritable();
+		
+		public void reduce (Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException{			
+			int sum = 0;
+			for(IntWritable val: values){
+				sum += val.get();		
+			}
+			result.set(sum);
+			context.write(key, result);
+		}
+	}
+
+	public static void main(String[] args) throws Exception{
+
+	    Configuration conf = new Configuration();	
+		
+	    Job job = Job.getInstance(conf, "Tv Sales Invalid REcords");
+	    job.setJarByClass(TvSales.class);
+	    
+	    job.setMapOutputKeyClass(Text.class);
+	    job.setMapOutputValueClass(IntWritable.class);
+	    
+	    job.setOutputKeyClass(Text.class);
+	    job.setOutputValueClass(IntWritable.class);
+	    
+	    job.setMapperClass(TvSalesMapper.class);
+	    job.setCombinerClass(TvSalesReducer.class);
+	    job.setReducerClass(TvSalesReducer.class);  
+	    
+	    FileInputFormat.addInputPath(job, new Path(args[0]));
+	    FileOutputFormat.setOutputPath(job, new Path(args[1]));
+	    
+	    System.exit(job.waitForCompletion(true) ? 0 : 1);  	    	    	    
+	}
+}
+
+
+
+
+
+
+[acadgild@localhost ~]$ ll
+total 104
+-rw-rw-r--.  1 acadgild acadgild 11712 Jun 25 20:19 allnonida.jar
+-rw-rw-r--.  1 acadgild acadgild  4691 Jun 25 19:27 assignment.jar
+-rw-rw-r--.  1 acadgild acadgild   717 Jun 25 19:32 assmapreduce.txt
+-rw-rw-r--.  1 acadgild acadgild  4783 Jun 25 20:07 badrecords.jar
+drwxr-xr-x.  4 acadgild acadgild  4096 Jun 16 11:43 Desktop
+drwxr-xr-x.  2 acadgild acadgild  4096 Feb  2 12:52 Documents
+drwxr-xr-x.  2 acadgild acadgild  4096 Jun 25 16:45 Downloads
+drwxrwxr-x.  3 acadgild acadgild  4096 Dec 29 16:59 eclipse
+drwxrwxr-x.  6 acadgild acadgild  4096 Jun 25 17:53 eclipse-workspace
+drwxrwxr-x. 13 acadgild acadgild  4096 Feb  9 18:06 install
+-rwxrwxrwx.  1 acadgild acadgild   127 Jun 16 11:17 max-temp.txt
+drwxr-xr-x.  2 acadgild acadgild  4096 Dec 27 17:03 Music
+drwxr-xr-x.  2 acadgild acadgild  4096 Dec 27 17:03 Pictures
+-rw-rw-r--.  1 acadgild acadgild  7845 Jun 15 11:16 pig_1529041478547.log
+drwxr-xr-x.  2 acadgild acadgild  4096 Dec 27 17:03 Public
+drwxr-xr-x.  2 acadgild acadgild  4096 Dec 27 17:03 Templates
+drwxr-xr-x.  2 acadgild acadgild  4096 Dec 27 17:03 Videos
+-rw-rw-r--.  1 acadgild acadgild  5922 Jun 25 20:00 wordcount.jar
+-rw-rw-r--.  1 acadgild acadgild   328 Jun 16 11:04 word-count.txt
+-rw-rw-r--.  1 acadgild acadgild  3641 Jun 16 11:57 word.txt
+You have new mail in /var/spool/mail/acadgild
+[acadgild@localhost ~]$ hadoop jar allnonida.jar assignment.TvSalesonida /hadoopdata1/assmapreduce.txt  /hadoopdata1/task1mapreduceo
+18/06/25 20:20:59 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+18/06/25 20:21:00 INFO client.RMProxy: Connecting to ResourceManager at localhost/127.0.0.1:8032
+18/06/25 20:21:02 WARN mapreduce.JobResourceUploader: Hadoop command-line option parsing not performed. Implement the Tool interface and execute your application with ToolRunner to remedy this.
+18/06/25 20:21:03 INFO input.FileInputFormat: Total input paths to process : 1
+18/06/25 20:21:03 INFO mapreduce.JobSubmitter: number of splits:1
+18/06/25 20:21:04 INFO mapreduce.JobSubmitter: Submitting tokens for job: job_1529123615612_0008
+18/06/25 20:21:04 INFO impl.YarnClientImpl: Submitted application application_1529123615612_0008
+18/06/25 20:21:04 INFO mapreduce.Job: The url to track the job: http://localhost:8088/proxy/application_1529123615612_0008/
+18/06/25 20:21:04 INFO mapreduce.Job: Running job: job_1529123615612_0008
+18/06/25 20:21:20 INFO mapreduce.Job: Job job_1529123615612_0008 running in uber mode : false
+18/06/25 20:21:20 INFO mapreduce.Job:  map 0% reduce 0%
+18/06/25 20:21:33 INFO mapreduce.Job:  map 100% reduce 0%
+18/06/25 20:21:44 INFO mapreduce.Job:  map 100% reduce 100%
+18/06/25 20:21:45 INFO mapreduce.Job: Job job_1529123615612_0008 completed successfully
+18/06/25 20:21:46 INFO mapreduce.Job: Counters: 49
+	File System Counters
+		FILE: Number of bytes read=26
+		FILE: Number of bytes written=215743
+		FILE: Number of read operations=0
+		FILE: Number of large read operations=0
+		FILE: Number of write operations=0
+		HDFS: Number of bytes read=832
+		HDFS: Number of bytes written=16
+		HDFS: Number of read operations=6
+		HDFS: Number of large read operations=0
+		HDFS: Number of write operations=2
+	Job Counters 
+		Launched map tasks=1
+		Launched reduce tasks=1
+		Data-local map tasks=1
+		Total time spent by all maps in occupied slots (ms)=10239
+		Total time spent by all reduces in occupied slots (ms)=9259
+		Total time spent by all map tasks (ms)=10239
+		Total time spent by all reduce tasks (ms)=9259
+		Total vcore-milliseconds taken by all map tasks=10239
+		Total vcore-milliseconds taken by all reduce tasks=9259
+		Total megabyte-milliseconds taken by all map tasks=10484736
+		Total megabyte-milliseconds taken by all reduce tasks=9481216
+	Map-Reduce Framework
+		Map input records=18
+		Map output records=3
+		Map output bytes=54
+		Map output materialized bytes=26
+		Input split bytes=115
+		Combine input records=3
+		Combine output records=1
+		Reduce input groups=1
+		Reduce shuffle bytes=26
+		Reduce input records=1
+		Reduce output records=1
+		Spilled Records=2
+		Shuffled Maps =1
+		Failed Shuffles=0
+		Merged Map outputs=1
+		GC time elapsed (ms)=231
+		CPU time spent (ms)=2470
+		Physical memory (bytes) snapshot=281358336
+		Virtual memory (bytes) snapshot=4118196224
+		Total committed heap usage (bytes)=170004480
+	Shuffle Errors
+		BAD_ID=0
+		CONNECTION=0
+		IO_ERROR=0
+		WRONG_LENGTH=0
+		WRONG_MAP=0
+		WRONG_REDUCE=0
+	File Input Format Counters 
+		Bytes Read=717
+	File Output Format Counters 
+		Bytes Written=16
+You have new mail in /var/spool/mail/acadgild
+[acadgild@localhost ~]$ hdfs dfs -ls /hadoopdata1/task1mapreduceo
+18/06/25 20:22:12 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+Found 2 items
+-rw-r--r--   1 acadgild supergroup          0 2018-06-25 20:21 /hadoopdata1/task1mapreduceo/_SUCCESS
+-rw-r--r--   1 acadgild supergroup         16 2018-06-25 20:21 /hadoopdata1/task1mapreduceo/part-r-00000
+[acadgild@localhost ~]$ hdfs dfs -cat /hadoopdata1/task1mapreduceo/part-r-00000
+18/06/25 20:22:29 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+Uttar Pradesh	3
+[acadgild@localhost ~]$ 
+
+
+
+
+
+all company sales:
+
+
+
+code:
+
+
+
+package assignment;
+
+import org.apache.hadoop.mapreduce.*;
+import org.apache.hadoop.mapreduce.Mapper.Context;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+
+
+import java.io.IOException;
+import java.util.logging.Logger;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.*;
+import org.apache.hadoop.mapred.TextInputFormat;
+
+public class TvSalescompany {
+	
+	public static class TvSalesMapper extends Mapper<LongWritable, Text, Text, IntWritable>{
+		
+		public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException{
+	
+		    if(recordIsInvalid(value)==false){
+		        Text company = new Text();
+			IntWritable unit = new IntWritable();				
+			company = new Text(value.toString().split("\\|")[0]);
+			unit = new IntWritable(1);
+			context.write(company, unit );
+		    }
+
+		}
+		
+		private boolean recordIsInvalid(Text record){
+			
+			String[] lineArray = record.toString().split("\\|");
+			boolean isInvalid = false;
+	        for(int i=0;i<lineArray.length;i++){
+	        	if(lineArray[i].equals("NA")){
+	        		isInvalid = true;
+	        	}
+	        }
+	        return isInvalid;
+		}
+	}
+	public static class TvSalesReducer extends Reducer<Text, IntWritable, Text, IntWritable>{
+		
+		private IntWritable result = new IntWritable();
+		
+		public void reduce (Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException{			
+			int sum = 0;
+			for(IntWritable val: values){
+				sum += val.get();		
+			}
+			result.set(sum);
+			context.write(key, result);
+		}
+	}
+
+	public static void main(String[] args) throws Exception{
+
+	    Configuration conf = new Configuration();	
+		
+	    Job job = Job.getInstance(conf, "Tv Sales Invalid REcords");
+	    job.setJarByClass(TvSales.class);
+	    
+	    job.setMapOutputKeyClass(Text.class);
+	    job.setMapOutputValueClass(IntWritable.class);
+	    
+	    job.setOutputKeyClass(Text.class);
+	    job.setOutputValueClass(IntWritable.class);
+	    
+	    job.setMapperClass(TvSalesMapper.class);
+	    job.setCombinerClass(TvSalesReducer.class);
+	    job.setReducerClass(TvSalesReducer.class);  
+	    
+	    FileInputFormat.addInputPath(job, new Path(args[0]));
+	    FileOutputFormat.setOutputPath(job, new Path(args[1]));
+	    
+	    System.exit(job.waitForCompletion(true) ? 0 : 1);  	    	    	    
+	}
+}
+
+
+
+cli:
+
+
+[acadgild@localhost ~]$ ll
+total 104
+-rw-rw-r--.  1 acadgild acadgild 11712 Jun 25 20:19 allnonida.jar
+-rw-rw-r--.  1 acadgild acadgild  4691 Jun 25 19:27 assignment.jar
+-rw-rw-r--.  1 acadgild acadgild   717 Jun 25 19:32 assmapreduce.txt
+-rw-rw-r--.  1 acadgild acadgild  4783 Jun 25 20:07 badrecords.jar
+drwxr-xr-x.  4 acadgild acadgild  4096 Jun 16 11:43 Desktop
+drwxr-xr-x.  2 acadgild acadgild  4096 Feb  2 12:52 Documents
+drwxr-xr-x.  2 acadgild acadgild  4096 Jun 25 16:45 Downloads
+drwxrwxr-x.  3 acadgild acadgild  4096 Dec 29 16:59 eclipse
+drwxrwxr-x.  6 acadgild acadgild  4096 Jun 25 17:53 eclipse-workspace
+drwxrwxr-x. 13 acadgild acadgild  4096 Feb  9 18:06 install
+-rwxrwxrwx.  1 acadgild acadgild   127 Jun 16 11:17 max-temp.txt
+drwxr-xr-x.  2 acadgild acadgild  4096 Dec 27 17:03 Music
+drwxr-xr-x.  2 acadgild acadgild  4096 Dec 27 17:03 Pictures
+-rw-rw-r--.  1 acadgild acadgild  7845 Jun 15 11:16 pig_1529041478547.log
+drwxr-xr-x.  2 acadgild acadgild  4096 Dec 27 17:03 Public
+drwxr-xr-x.  2 acadgild acadgild  4096 Dec 27 17:03 Templates
+drwxr-xr-x.  2 acadgild acadgild  4096 Dec 27 17:03 Videos
+-rw-rw-r--.  1 acadgild acadgild  5922 Jun 25 20:00 wordcount.jar
+-rw-rw-r--.  1 acadgild acadgild   328 Jun 16 11:04 word-count.txt
+-rw-rw-r--.  1 acadgild acadgild  3641 Jun 16 11:57 word.txt
+You have new mail in /var/spool/mail/acadgild
+[acadgild@localhost ~]$ hadoop jar allnonida.jar assignment.TvSalescompany /hadoopdata1/assmapreduce.txt  /hadoopdata1/task1mapreduceallc
+18/06/25 20:26:19 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+18/06/25 20:26:21 INFO client.RMProxy: Connecting to ResourceManager at localhost/127.0.0.1:8032
+18/06/25 20:26:22 WARN mapreduce.JobResourceUploader: Hadoop command-line option parsing not performed. Implement the Tool interface and execute your application with ToolRunner to remedy this.
+18/06/25 20:26:23 INFO input.FileInputFormat: Total input paths to process : 1
+18/06/25 20:26:23 INFO mapreduce.JobSubmitter: number of splits:1
+18/06/25 20:26:23 INFO mapreduce.JobSubmitter: Submitting tokens for job: job_1529123615612_0009
+18/06/25 20:26:24 INFO impl.YarnClientImpl: Submitted application application_1529123615612_0009
+18/06/25 20:26:24 INFO mapreduce.Job: The url to track the job: http://localhost:8088/proxy/application_1529123615612_0009/
+18/06/25 20:26:24 INFO mapreduce.Job: Running job: job_1529123615612_0009
+18/06/25 20:26:36 INFO mapreduce.Job: Job job_1529123615612_0009 running in uber mode : false
+18/06/25 20:26:36 INFO mapreduce.Job:  map 0% reduce 0%
+18/06/25 20:26:45 INFO mapreduce.Job:  map 100% reduce 0%
+18/06/25 20:26:58 INFO mapreduce.Job:  map 100% reduce 100%
+18/06/25 20:26:58 INFO mapreduce.Job: Job job_1529123615612_0009 completed successfully
+18/06/25 20:26:58 INFO mapreduce.Job: Counters: 49
+	File System Counters
+		FILE: Number of bytes read=64
+		FILE: Number of bytes written=215837
+		FILE: Number of read operations=0
+		FILE: Number of large read operations=0
+		FILE: Number of write operations=0
+		HDFS: Number of bytes read=832
+		HDFS: Number of bytes written=38
+		HDFS: Number of read operations=6
+		HDFS: Number of large read operations=0
+		HDFS: Number of write operations=2
+	Job Counters 
+		Launched map tasks=1
+		Launched reduce tasks=1
+		Data-local map tasks=1
+		Total time spent by all maps in occupied slots (ms)=7779
+		Total time spent by all reduces in occupied slots (ms)=8135
+		Total time spent by all map tasks (ms)=7779
+		Total time spent by all reduce tasks (ms)=8135
+		Total vcore-milliseconds taken by all map tasks=7779
+		Total vcore-milliseconds taken by all reduce tasks=8135
+		Total megabyte-milliseconds taken by all map tasks=7965696
+		Total megabyte-milliseconds taken by all reduce tasks=8330240
+	Map-Reduce Framework
+		Map input records=18
+		Map output records=16
+		Map output bytes=166
+		Map output materialized bytes=64
+		Input split bytes=115
+		Combine input records=16
+		Combine output records=5
+		Reduce input groups=5
+		Reduce shuffle bytes=64
+		Reduce input records=5
+		Reduce output records=5
+		Spilled Records=10
+		Shuffled Maps =1
+		Failed Shuffles=0
+		Merged Map outputs=1
+		GC time elapsed (ms)=326
+		CPU time spent (ms)=1900
+		Physical memory (bytes) snapshot=284053504
+		Virtual memory (bytes) snapshot=4118192128
+		Total committed heap usage (bytes)=170004480
+	Shuffle Errors
+		BAD_ID=0
+		CONNECTION=0
+		IO_ERROR=0
+		WRONG_LENGTH=0
+		WRONG_MAP=0
+		WRONG_REDUCE=0
+	File Input Format Counters 
+		Bytes Read=717
+	File Output Format Counters 
+		Bytes Written=38
+You have new mail in /var/spool/mail/acadgild
+[acadgild@localhost ~]$ hdfs dfs -cat /hadoopdata1/task1mapreduceallc/part-r-00000
+18/06/25 20:27:20 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+Akai	1
+Lava	3
+Onida	3
+Samsung	7
+Zen	2
+[acadgild@localhost ~]$ 
+
